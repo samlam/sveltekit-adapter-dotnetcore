@@ -3,8 +3,6 @@ import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import typescript from '@rollup/plugin-typescript';
 
-var builtinModules = import('module').builtinModules;
-
 export default [
 	{
 		input: 'src/index.ts',
@@ -15,7 +13,7 @@ export default [
 			exports:'default'
 		},
 		plugins: [nodeResolve(), typescript(), commonjs(), json()],
-		external: ['../output/server/app.js', './env.js', builtinModules]
+		external: ['../output/server/app.js', './env.js', ...require('module').builtinModules]
 	},
 	{
 		input: 'src/dotnetcoreAdapter.ts',
@@ -26,7 +24,7 @@ export default [
 			//exports:'default'
 		},
 		plugins: [nodeResolve(), typescript(), commonjs(), json()],
-		external: ['esbuild', 'fs', 'path', builtinModules]
+		external: ['esbuild', 'fs', 'path', ...require('module').builtinModules]
 	},
 	{
 		input: 'src/shims.ts',
@@ -35,6 +33,6 @@ export default [
 			format: 'es'
 		},
 		plugins: [nodeResolve(), typescript(), commonjs(), json()],
-		external: [builtinModules]
+		external: [...require('module').builtinModules]
 	}
 ];
