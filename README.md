@@ -20,7 +20,7 @@ export default {
 };
 ```
 
-### out
+### out parameter
 
 The directory to build the server to. It defaults to `build`
 
