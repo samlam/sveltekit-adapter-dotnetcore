@@ -24,8 +24,6 @@ export default {
 
 The directory to build the server to. It defaults to `build`
 
-The default options for this version are as follows:
-
 ## License
 
 [MIT](LICENSE)
