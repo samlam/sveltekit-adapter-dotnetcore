@@ -4,8 +4,24 @@ import {
 } from 'fs';
 import { join } from 'path';
 import { fileURLToPath, URL } from 'url';
-import { Adapter, AdapterUtils, ValidatedConfig } from '@sveltejs/kit';
+import { Adapter, Builder } from '@sveltejs/kit';
 
+
+type BuilderFix = Builder & {
+    utils: {
+        log: {
+            minor: (a:string) => ""
+        },
+        copy: (a:string, b:string) => "",
+        copy_client_files: (a: string) => "",
+        copy_static_files: (a: string) => "",
+    },
+    config: {
+        kit: {
+            appDir: string
+        }
+    }
+} 
 
 type esBuildOptions = esbuild.BuildOptions;
 
@@ -27,20 +43,20 @@ export default function ({
 
     const adapter: Adapter = {
         name: '@sveltejs/adapter-dotnetcore',
-        adapt: async ({
-            utils,
-            config
-        }: { utils: AdapterUtils, config: ValidatedConfig }) => {
+        adapt: async (builder: BuilderFix): Promise<void> => {
             //utils.update_ignores({ patterns: [out] });
-            utils.log.minor('Copying assets');
-            const static_directory = join(out, 'assets');
-            utils.copy_client_files(static_directory);
-            utils.copy_static_files(static_directory);
+            builder.utils.log.minor('Copying assets')
+            const static_directory = join(out, 'assets')
 
-            utils.log.minor('Building server');
+            //utils.copy_client_files(static_directory);
+            //utils.copy_static_files(static_directory);
+            builder.utils.copy_client_files(static_directory)
+            builder.utils.copy_static_files(static_directory)
+
+            builder.utils.log.minor('Building server');
             //const files = fileURLToPath(new URL('./files', import.meta.url));
             const files = fileURLToPath(new URL('./', import.meta.url));
-            utils.copy(files, '.svelte-kit/dotnetcore');
+            builder.utils.copy(files, '.svelte-kit/dotnetcore');
 
             const defaultOptions: esBuildOptions = {
                 //entryPoints: ['.svelte-kit/node/index.js'],
@@ -53,11 +69,11 @@ export default function ({
                 target: 'node12',
                 inject: [join(files, 'shims.js')],
                 define: {
-                    esbuild_app_dir: '"' + config.kit.appDir + '"'
+                    //esbuild_app_dir: '"' + config.kit.appDir + '"'
+                    esbuild_app_dir: '"' + builder.config.kit.appDir + '"'
                 }
             };
             const buildOptions: esBuildOptions = esbuildOptsFunc ? await esbuildOptsFunc(defaultOptions) : defaultOptions;
-            console.warn(`buildOptions`, buildOptions);
             await esbuild.build(buildOptions);
 
             // TBD - Add prerender here; prerendering requires a live dotnetcore 

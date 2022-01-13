@@ -1,6 +1,6 @@
 # sveltekit-adapter-dotnetcore
 
-[Adapter](https://kit.svelte.dev/docs#adapters) for SvelteKit apps that runs with standalone dotnetcore server, which runs with [jering-nodejs](https://github.com/JeringTech/Javascript.NodeJS).
+[Adapter](https://kit.svelte.dev/docs#adapters) for SvelteKit apps that runs with standalone dotnetcore server, which requires [jering-nodejs](https://github.com/JeringTech/Javascript.NodeJS).
 
 ## Usage
 
@@ -22,7 +22,11 @@ export default {
 
 ### out parameter
 
-The directory to build the server to. It defaults to `build`
+The default output directory is set to `build`
+
+## Next or TBD
+
+Will provide a .net core example
 
 ## License
 

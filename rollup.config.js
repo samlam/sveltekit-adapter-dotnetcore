@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
-import typescript from '@rollup/plugin-typescript';
+import typescript from 'rollup-plugin-typescript2';
 
 export default [
 	{
@@ -29,10 +30,12 @@ export default [
 	{
 		input: 'src/shims.ts',
 		output: {
-			file: 'files/shims.js',
-			format: 'es'
+			//file: 'files/shims.js',
+			dir: 'files',
+			format: 'es',
+			sourcemap: false,
 		},
-		plugins: [nodeResolve(), typescript(), commonjs(), json()],
+		plugins: [nodeResolve(), typescript(), commonjs()],
 		external: [...require('module').builtinModules]
 	}
 ];
