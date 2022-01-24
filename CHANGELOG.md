@@ -12,6 +12,11 @@
 
 - fixed build hang issue
 
+## 0.1.2
+
+- fix missing rawBody in the request, which is required by
+  sveltekit render method
+
 ### Patch Changes
 
 - various
