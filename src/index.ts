@@ -37,19 +37,20 @@ const HttpHandler = (
         }
 
         render(origRequest)
-            .then((resp: Response | string) => {
+            .then((resp: Response | {body:string}) => {
 
                 if (_isDebug) {
                     _logger.write(`svelte response - ${JSON.stringify(resp)} \r\n`)
                 }
                 if (origRequest.bodyOnlyReply)
-                    callback(null, resp.body)
+                    callback(null, (resp as {body:string}).body )
                 else
-                    callback(null, {
-                        status: resp.status,
-                        headers: resp.headers,
-                        body: resp.body
-                    })
+                    // callback(null, {
+                    //     status: resp.status,
+                    //     headers: resp.headers,
+                    //     body: resp.body
+                    // })
+                    callback(null, resp as Response)
             })
             .catch((err:Error) => callback(err, null));
     } catch (err) {

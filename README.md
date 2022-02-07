@@ -24,9 +24,19 @@ export default {
 
 The default output directory is set to `build`
 
+## dotnet sample app
+
+* Run pnpm to restore node packages.
+
+```sh
+pnpm install
+```
+
+* to build and debug with VS code, hit F5 with the `.NET Core Launch (Web)` profile
+
 ## Next or TBD
 
-Will provide a .net core example
+Will improve aspnetcore Razor example
 
 ## License
 
