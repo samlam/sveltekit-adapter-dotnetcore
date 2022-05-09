@@ -24,6 +24,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 // app.UseResponseCompression();
 
+
 app.UseRouting();
 
 app.UseAuthorization();
@@ -32,8 +33,8 @@ app.MapRazorPages();
 
 if (hostEnvironment != null)
 {
-    // Add 
-    app.UseNodejsService(hostEnvironment);
+    //TODO: home page should not be landed here
+    app.UseNodejsService(hostEnvironment, "./build/static");
     app.UseMiddleware<NodejsMiddleware>();
 }
 

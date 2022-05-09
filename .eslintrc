@@ -17,5 +17,5 @@
       "no-eval": ["error", {"allowIndirect": true}],
       "@typescript-eslint/ban-ts-comment": "off"
     },
-    "ignorePatterns": ["node_modules/**/*.*","files/**/*.*"]
+    "ignorePatterns": ["node_modules/**/*.*","files/**/*.*","wwwroot/**/*.*"]
 }

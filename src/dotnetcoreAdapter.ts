@@ -1,80 +1,76 @@
-import esbuild from 'esbuild';
+import * as esbuild from 'esbuild'
 import {
-    readFileSync
-} from 'fs';
-import { join } from 'path';
-import { fileURLToPath, URL } from 'url';
-import { Adapter, Builder } from '@sveltejs/kit';
+    readFileSync,
+    writeFileSync,
+} from 'fs'
+import { join } from 'path'
+import { fileURLToPath, URL } from 'url'
+import type { Adapter, Builder } from '@sveltejs/kit'
+import type { AdapterOptionsExtra } from './common'
 
-
-type BuilderFix = Builder & {
-    utils: {
-        log: {
-            minor: (a:string) => ""
-        },
-        copy: (a:string, b:string) => "",
-        copy_client_files: (a: string) => "",
-        copy_static_files: (a: string) => "",
-    },
-    config: {
-        kit: {
-            appDir: string
-        }
-    }
-} 
-
-type esBuildOptions = esbuild.BuildOptions;
-
-type adapterOptions = {
-    out: string,
-    precompress: boolean,
-    env?: {
-        host?: string,
-        port?: string
-    },
-    esbuildOptsFunc?: (defaultOptions: esBuildOptions) => Promise<esBuildOptions>
-}
+const adapterfiles: string = fileURLToPath(new URL('./', import.meta.url).href)
 
 export default function ({
     out = 'build',
-    //precompress = false, //compression will be done in dotnetcore for performance
+    //precompress = false, //compression will be done in dotnetcore for performance,
+    envPrefix = '',
     esbuildOptsFunc = null
-}: adapterOptions): Adapter {
+}: AdapterOptionsExtra): Adapter {
 
     const adapter: Adapter = {
         name: '@sveltejs/adapter-dotnetcore',
-        adapt: async (builder: BuilderFix): Promise<void> => {
-            //utils.update_ignores({ patterns: [out] });
-            builder.utils.log.minor('Copying assets')
-            const static_directory = join(out, 'assets')
+        adapt: async (builder:Builder): Promise<void> => {
+            const dncPath = builder.getBuildDirectory('dotnetcore')
 
-            //utils.copy_client_files(static_directory);
-            //utils.copy_static_files(static_directory);
-            builder.utils.copy_client_files(static_directory)
-            builder.utils.copy_static_files(static_directory)
+            builder.rimraf(out)
+            builder.log.minor('Copying assets')
 
-            builder.utils.log.minor('Building server');
-            //const files = fileURLToPath(new URL('./files', import.meta.url));
-            const files = fileURLToPath(new URL('./', import.meta.url));
-            builder.utils.copy(files, '.svelte-kit/dotnetcore');
+            builder.writeClient(`${dncPath}/client`);
+            builder.writeServer(`${dncPath}/server`);
+            builder.writeStatic(`${dncPath}/static`);
+            builder.writePrerendered(`${dncPath}/prerendered`);
 
-            const defaultOptions: esBuildOptions = {
-                //entryPoints: ['.svelte-kit/node/index.js'],
-                entryPoints: ['.svelte-kit/dotnetcore/index.js'],
+            builder.log.warn(adapterfiles)
+
+            builder.copy(adapterfiles, out, {
+                //TODO: can't replace the references here, the file has to be in
+                // cjs format 
+                // replace: { SERVER: './server/index.js', MANIFEST:
+                // './manifest.js', ENV_PREFIX: JSON.stringify(envPrefix)
+                // }
+            });
+
+            builder.writeClient(`${out}/client`);
+            builder.writeServer(`${out}/server`);
+            builder.writeStatic(`${out}/static`);
+            builder.writePrerendered(`${out}/prerendered`);
+
+            //HACK: this feels like a hack to me
+            builder.log.warn('replacing references')
+            const resultAfterReplace = readFileSync(`${out}/index.js`, {encoding:'utf8'})
+                .replace(/'SERVER'/g, `'./server/index.js'`)
+                .replace(/'MANIFEST'/g, `'./server/manifest.js'`)
+            writeFileSync(`${out}/index.js`, resultAfterReplace, {encoding:'utf8'});
+
+            builder.log.minor('Building server')
+
+
+            const defaultOptions: esbuild.BuildOptions = {
+                entryPoints: [`${out}/index.js`],
                 outfile: join(out, 'index.cjs'),
                 bundle: true,
                 external: Object.keys(JSON.parse(readFileSync('package.json', 'utf8')).dependencies || {}),
                 format: 'cjs',
                 platform: 'node',
-                target: 'node12',
-                inject: [join(files, 'shims.js')],
+                target: 'node16',
+                inject: [join(adapterfiles, 'shims.js')],
                 define: {
-                    //esbuild_app_dir: '"' + config.kit.appDir + '"'
                     esbuild_app_dir: '"' + builder.config.kit.appDir + '"'
                 }
-            };
-            const buildOptions: esBuildOptions = esbuildOptsFunc ? await esbuildOptsFunc(defaultOptions) : defaultOptions;
-            await esbuild.build(buildOptions);
+            }
+
+            const buildOptions: esbuild.BuildOptions = esbuildOptsFunc ? await esbuildOptsFunc(defaultOptions) : defaultOptions;
+            esbuild.buildSync(buildOptions)
 
             // TBD - Add prerender here; prerendering requires a live dotnetcore 
             //       server, need to put a bit of thought how it should be setup
@@ -90,5 +86,5 @@ export default function ({
         }
     };
 
-    return adapter;
+    return adapter
 }

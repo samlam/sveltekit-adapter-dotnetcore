@@ -32,7 +32,37 @@ The default output directory is set to `build`
 pnpm install
 ```
 
-* to build and debug with VS code, hit F5 with the `.NET Core Launch (Web)` profile
+* build the adapter
+
+```sh
+npm run build
+```
+
+* build the sample app
+
+```sh
+pnpm run build --filter='sveltekit-dotnet'
+```
+
+* to build and debug dotnet application with VS code, by hitting F5 with the
+  `.NET Core Launch (Web)` profile; in the sample app, the about page is
+  rendered in sveltekit using server side method
+
+The site is running on <https://localhost:5005/>
+
+* for sveltekit HMR, just run `npm run dev` in the Razor folder
+
+The about page is on <http://localhost:3000/about>
+
+## Dependencies
+
+Please note the project is tested with node.js v16, which supports fetch.
+
+It requires `pnpm` to be installed globally.
+
+```sh
+npm install -g pnpm
+```
 
 ## Next or TBD
 

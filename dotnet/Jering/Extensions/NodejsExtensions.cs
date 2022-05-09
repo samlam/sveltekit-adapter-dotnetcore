@@ -39,15 +39,17 @@ namespace Jering
 				.AddNodeJS()
 				.Configure<OutOfProcessNodeJSServiceOptions>(options =>
 				{
+					options.Concurrency = Concurrency.MultiProcess;
+					options.ConcurrencyDegree = 2;
+					options.TimeoutMS = 1000;
+
 					if (Debugger.IsAttached)
 					{
 						options.EnableFileWatching = true;
-						options.NumRetries = 1;
+						//options.NumRetries = 1;
 						options.WatchPath = "./build/";
+						options.TimeoutMS = -1; // -1 to wait forever (used for attaching debugger, which needs to be set in code)
 					}
-					options.Concurrency = Concurrency.MultiProcess;
-					options.ConcurrencyDegree = 2;
-					options.TimeoutMS = -1; // -1 to wait forever (used for attaching debugger, which needs to be set in code)
 				})
 				.Configure<HttpNodeJSServiceOptions>(options => options.Version = HttpVersion.Version20)
 				.Configure<NodeJSProcessOptions>(options =>
@@ -55,7 +57,7 @@ namespace Jering
 #if DEBUG
 					options.NodeAndV8Options = "--inspect --es-module-specifier-resolution=node --experimental-vm-modules";
 #else
-					options.NodeAndV8Options = "--es-module-specifier-resolution=node --experimental-vm-modules";
+					options.NodeAndV8Options = "--es-module-specifier-resolution=node --experimental-vm-modules ";
 #endif
 					options.EnvironmentVariables = new Dictionary<string, string>
 					{
@@ -73,15 +75,18 @@ namespace Jering
 		/// <param name="app">Application request pipeline.</param>
 		/// <param name="hostEnvironment">Hosting environment.</param>
 		/// <returns>Extension method return parameter.</returns>
-		public static IApplicationBuilder UseNodejsService(this IApplicationBuilder app, IHostEnvironment hostEnvironment)
+		public static IApplicationBuilder UseNodejsService(
+			this IApplicationBuilder app,
+			IHostEnvironment hostEnvironment, 
+			string assetsPath)
 		{
+			string staticAssetsPath = assetsPath ?? "./build/static";
 			return app
 				.UseStaticFiles(new StaticFileOptions()
 				{
 					HttpsCompression = HttpsCompressionMode.Compress,
-					FileProvider = new PhysicalFileProvider(
-						Path.Join(hostEnvironment?.ContentRootPath, "./build/assets"))
-				});//.UseMiddleware<NodejsMiddleware>();
+					FileProvider = new PhysicalFileProvider(Path.Join(hostEnvironment?.ContentRootPath, staticAssetsPath))
+				});
 		}
 
 		internal static async Task<NodejsResponse?> InvokeNodejsService(

@@ -55,7 +55,7 @@ namespace Jering
 		/// <summary>
 		/// Gets or sets a value indicating whether gets or sets GzipCompressResponse.
 		/// </summary>
-		public bool GzipCompressResponse { get; set; } = true;
+		public bool GzipCompressResponse { get; set; } = false;
 
 		/// <summary>
 		/// Gets or sets the non-secured port used by forge.

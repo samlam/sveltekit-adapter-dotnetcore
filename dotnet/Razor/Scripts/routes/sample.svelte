@@ -1,6 +1,5 @@
 <script context="module" lang="ts">
 	export const prerender = true;
-    export const ssr = true;
 </script>
 
 <svelte:head>
@@ -9,7 +8,7 @@
 
 
 <section> 
-	<h1>Sveltekit + dotnet</h1>
+	<h1>this component is rendered by Sveltekit + dotnet</h1>
 </section>
 
 <style>

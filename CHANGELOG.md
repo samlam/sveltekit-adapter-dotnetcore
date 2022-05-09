@@ -17,6 +17,10 @@
 - fix missing rawBody in the request, which is required by
   sveltekit render method
 
+## 0.1.3
+
+- apply temporary fix to support newer version of sveltekit
+
 ### Patch Changes
 
 - various

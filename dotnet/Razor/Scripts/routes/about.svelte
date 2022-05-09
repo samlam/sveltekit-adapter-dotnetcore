@@ -1,6 +1,7 @@
 <script context="module" lang="ts">
+	import { browser, dev } from '$app/env';
+	export const hydrate = dev;
 	export const prerender = true;
-    export const ssr = true;
 
 	const pageName = 'About'
 </script>

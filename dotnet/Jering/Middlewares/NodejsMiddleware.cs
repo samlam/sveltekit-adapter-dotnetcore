@@ -52,26 +52,45 @@ namespace Jering
 			if (Debugger.IsAttached)
 				_Logger.LogInformation($"{nameof(NodejsMiddleware)} is invoked for {context.Request.Path}");
 
-			NodejsResponse? result = await _NodeJSService
-				.InvokeNodejsService(_NodejsOptions.CurrentValue, context, _ShouldGzipCompress, false, null, context.RequestAborted).ConfigureAwait(false);
+			NodejsResponse? result = null;
+			try 
+			{
+				result = await _NodeJSService
+					.InvokeNodejsService(_NodejsOptions.CurrentValue, context, _ShouldGzipCompress, false, null, context.RequestAborted).ConfigureAwait(false);
 
-			if (result == null || result.Status == 404)
+				if (result == null || result.Status == 404)
+				{
+					await _Next(context).ConfigureAwait(false);
+					return;
+				}
+			}
+			catch(Exception nodeEx)
+			{
+				_Logger.LogError(nodeEx, $"{nameof(NodejsMiddleware)} failed for {context.Request.Path}");
+				await _Next(context).ConfigureAwait(false);
+				return;
+			}
+
+			if (result == null)
 			{
 				await _Next(context).ConfigureAwait(false);
 				return;
 			}
 
 			HttpResponse httpResp = context.Response;
-
 			httpResp.StatusCode = result.Status;
 
+			if (result.Headers != null)
 			foreach (KeyValuePair<string, string> keyValuePair in result.Headers)
 			{
 				httpResp.Headers.Append(keyValuePair.Key, new Microsoft.Extensions.Primitives.StringValues(keyValuePair.Value));
 			}
 
 			if (result.BodyStream == null || result.BodyStream.Length == 0)
+			{
+				await _Next(context).ConfigureAwait(false);
 				return;
+			}
 
 			if (_ShouldGzipCompress)
 			{
