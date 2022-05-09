@@ -51,8 +51,6 @@ const HttpHandler = (
     let req: Request
 
     try {
-        // eslint-disable-next-line no-debugger
-        debugger;
         if (_isDebug) {
             _logger.write(`INFO: svelte request payload - ${JSON.stringify(origRequest)} \r\n`)
         }
