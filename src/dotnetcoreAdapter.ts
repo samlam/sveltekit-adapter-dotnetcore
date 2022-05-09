@@ -20,17 +20,8 @@ export default function ({
     const adapter: Adapter = {
         name: '@sveltejs/adapter-dotnetcore',
         adapt: async (builder:Builder): Promise<void> => {
-            const dncPath = builder.getBuildDirectory('dotnetcore')
-
             builder.rimraf(out)
             builder.log.minor('Copying assets')
-
-            builder.writeClient(`${dncPath}/client`);
-            builder.writeServer(`${dncPath}/server`);
-            builder.writeStatic(`${dncPath}/static`);
-            builder.writePrerendered(`${dncPath}/prerendered`);
-
-            builder.log.warn(adapterfiles)
 
             builder.copy(adapterfiles, out, {
                 //TODO: can't replace the references here, the file has to be in
@@ -47,13 +38,13 @@ export default function ({
 
             //HACK: this feels like a hack to me
             builder.log.warn('replacing references')
+
             const resultAfterReplace = readFileSync(`${out}/index.js`, {encoding:'utf8'})
                 .replace(/'SERVER'/g, `'./server/index.js'`)
                 .replace(/'MANIFEST'/g, `'./server/manifest.js'`)
             writeFileSync(`${out}/index.js`, resultAfterReplace, {encoding:'utf8'});
 
             builder.log.minor('Building server')
-
 
             const defaultOptions: esbuild.BuildOptions = {
                 entryPoints: [`${out}/index.js`],
