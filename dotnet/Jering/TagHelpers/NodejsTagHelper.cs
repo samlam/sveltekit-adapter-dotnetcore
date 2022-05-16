@@ -47,6 +47,7 @@ namespace Jering
 
 			output.TagMode = TagMode.StartTagAndEndTag;
 
+			//NOTE: this clears the slot
 			if (ResetContent)
 				output.Content.Clear();
 

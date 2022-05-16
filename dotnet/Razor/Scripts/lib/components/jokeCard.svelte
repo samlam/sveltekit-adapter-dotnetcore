@@ -1,9 +1,11 @@
 <script lang="ts">
-import { JokeApiResponse } from "../jokeService";
+import type { JokeApiResponse } from "../jokeService";
 
 export let jokeResponse: JokeApiResponse
+export let headOnly: boolean
 </script>
 
+{#if !headOnly}
 <section class="joke-card"> 
 	{#if jokeResponse.type == 'twopart'}
 	<h1>{jokeResponse.setup}</h1>
@@ -16,6 +18,7 @@ export let jokeResponse: JokeApiResponse
 	<p></p>
 	{/if}
 </section>
+{/if}
 
 <style lang="scss">
 	section.joke-card {
