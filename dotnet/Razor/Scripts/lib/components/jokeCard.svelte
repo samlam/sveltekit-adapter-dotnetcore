@@ -15,7 +15,8 @@ export let headOnly: boolean
 	<div>{jokeResponse.delivery}</div>
 	{:else}
 	<h1>{jokeResponse.joke}</h1>
-	<p></p>
+
+	<br />
 	{/if}
 </section>
 {/if}
@@ -23,6 +24,7 @@ export let headOnly: boolean
 <style lang="scss">
 	section.joke-card {
 		font-family: sans-serif;
+		font-size: 1em;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
@@ -42,6 +44,8 @@ export let headOnly: boolean
 		h1 {
 			margin: 0 1em 1em;
 			line-height: 1.6em;
+			font-size: 1em;
+			font-weight: bold;
 		}
 	}
 </style>
