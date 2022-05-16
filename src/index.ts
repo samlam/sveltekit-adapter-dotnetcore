@@ -3,8 +3,10 @@ import { Server } from 'SERVER'; /// reference will be replaced during sveltekit
 import { manifest } from 'MANIFEST'; /// reference will be replaced during sveltekit build
 import { installFetch } from '@sveltejs/kit/install-fetch'
 import { cleanup } from './cleanup'
-import { JeringNodeRequest, setupSvelteRequestOptions } from './common'
+import { setupSvelteRequestOptions } from './common'
 import { RequestOptions } from '@sveltejs/kit/types/private';
+import { Readable } from 'node:stream';
+import type {JeringNodeRequest, JeringNodeResponse} from './common'
 
 let _logger: WriteStream = null
 
@@ -45,7 +47,7 @@ const handleError = (msg:string ) => {
  * @param origRequest Jering request
  */
 const HttpHandler = (
-    callback: (err: Error, output: {status:number, headers: Headers , body:string}| string) => void, 
+    callback: (err: Error, output: Readable| ReadableStream | JeringNodeResponse| string) => void, 
     origRequest: JeringNodeRequest
 ): void=> {
     let req: Request
@@ -75,10 +77,11 @@ const HttpHandler = (
                 }
                 if (origRequest.bodyOnlyReply)
                     callback(null, (resp as {body:string}).body )
+                    //TODO: need to switch over to stream for performance
+                    //callback(null, (resp as Response).body )
                 else {
                     const r = (resp as Response)
                     r.text().then((data) => {
-                        //HACK: need to refactor to take advantage of the data stream
                         callback(null, {
                             status: r.status,
                             headers: r.headers,

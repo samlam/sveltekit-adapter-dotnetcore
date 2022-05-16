@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "sveltekit-dotnet sample project",
   "scripts": {
-    "dev": "cross-env VITE_ForgePort=5004 svelte-kit dev",
+    "dev": "cross-env VITE_ForgePort=5004 NODE_OPTIONS=\"--inspect=9222\" svelte-kit dev",
     "build": "svelte-kit build --verbose",
     "lint": "eslint --ignore-path .gitignore .",
     "lint:pretty": "prettier --check --plugin-search-dir=. . ",

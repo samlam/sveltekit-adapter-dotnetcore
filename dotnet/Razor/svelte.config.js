@@ -14,11 +14,11 @@ const config = {
 		// hydrate the <div id="svelte"> element in src/app.html
         files: {
 			assets: 'Assets',
-			//hooks: 'Scripts/hooks',
+			hooks: 'Scripts/hooks',
 			lib: 'Scripts/lib',
 			routes: 'Scripts/routes',
 			//serviceWorker: 'Scripts/service-worker',
-			template: 'Scripts/app.html'
+			template: 'Scripts/app.html',
 		},
 		adapter: adapter({ out : 'build', precompress : false})
 	},

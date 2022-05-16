@@ -24,7 +24,7 @@ export default function ({
             builder.log.minor('Copying assets')
 
             builder.copy(adapterfiles, out, {
-                //TODO: can't replace the references here, the file has to be in
+                //[x]: can't replace the references here, the file has to be in
                 // cjs format 
                 // replace: { SERVER: './server/index.js', MANIFEST:
                 // './manifest.js', ENV_PREFIX: JSON.stringify(envPrefix)
@@ -32,11 +32,10 @@ export default function ({
             });
 
             builder.writeClient(`${out}/client`);
+            builder.writeStatic(`${out}/client`);
             builder.writeServer(`${out}/server`);
-            builder.writeStatic(`${out}/static`);
             builder.writePrerendered(`${out}/prerendered`);
 
-            //HACK: this feels like a hack to me
             builder.log.warn('replacing references')
 
             const resultAfterReplace = readFileSync(`${out}/index.js`, {encoding:'utf8'})

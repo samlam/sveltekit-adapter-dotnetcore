@@ -1,15 +1,8 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.IO.Compression;
 using System.IO.Pipelines;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 using Jering.Javascript.NodeJS;
 using Microsoft.AspNetCore.Builder;
@@ -22,10 +15,10 @@ using Microsoft.Extensions.Hosting;
 
 namespace Jering
 {
-	/// <summary>
-	/// Custom middleware to use the capability of Jering lib.
-	/// </summary>
-	public static class NodejsExtensions
+    /// <summary>
+    /// Custom middleware to use the capability of Jering lib.
+    /// </summary>
+    public static class NodejsExtensions
 	{
 		/// <summary>
 		/// AddJering method to registed in Startup.
@@ -45,8 +38,8 @@ namespace Jering
 
 					if (Debugger.IsAttached)
 					{
+						options.Concurrency = Concurrency.None;
 						options.EnableFileWatching = true;
-						//options.NumRetries = 1;
 						options.WatchPath = "./build/";
 						options.TimeoutMS = -1; // -1 to wait forever (used for attaching debugger, which needs to be set in code)
 					}
@@ -80,7 +73,7 @@ namespace Jering
 			IHostEnvironment hostEnvironment, 
 			string assetsPath)
 		{
-			string staticAssetsPath = assetsPath ?? "./build/static";
+			string staticAssetsPath = assetsPath ?? "./build/client";
 			return app
 				.UseStaticFiles(new StaticFileOptions()
 				{
@@ -126,33 +119,27 @@ namespace Jering
 
 			bool bodyOnlyReply = overrideBodyOnlyReply ?? options.BodyOnlyReply;
 
+			object[] arguments = new object[]
+			{ 
+				await SetupRequest(
+					context,
+					bodyOnlyReply,
+					overrides).ConfigureAwait(false)
+			};
+
 			if (bodyOnlyReply == true)
 			{
 				Stream? streamResp = await nodeJSService.InvokeFromFileAsync<Stream>(
 				   modulePath: options.ScriptPath,
-				   args: new object[]
-				   {
-						await SetupRequest(
-							context,
-							bodyOnlyReply,
-							overrides).ConfigureAwait(false)
-				   },
+				   args: arguments,
 				   cancellationToken: cancellationToken).ConfigureAwait(false);
 
 				return streamResp == null ? null : new NodejsBodyOnlyResponse(streamResp);
 			}
 
-			return Debugger.IsAttached
-				? await DebugNodejsInvokation(nodeJSService, options, context, bodyOnlyReply, overrides, cancellationToken).ConfigureAwait(false)
-				: await nodeJSService.InvokeFromFileAsync<NodejsResponse>(
+			return await nodeJSService.InvokeFromFileAsync<NodejsResponse>(
 					modulePath: options.ScriptPath,
-					args: new object[]
-					{
-						await SetupRequest(
-							context,
-							bodyOnlyReply,
-							overrides).ConfigureAwait(false)
-					},
+					args: arguments,
 					cancellationToken: cancellationToken).ConfigureAwait(false);
 		}
 
@@ -168,62 +155,15 @@ namespace Jering
 			return compressor.BaseStream;
 		}
 
-		private static async Task<NodejsResponse?> DebugNodejsInvokation(
-			INodeJSService nodeJSService,
-			NodejsOptions options,
-			HttpContext context,
-			bool? overrideBodyOnlyReply = null,
-			RequestOverrides? overrides = null,
-			CancellationToken cancel = default)
-		{
-			bool bodyOnlyReply = overrideBodyOnlyReply ?? options.BodyOnlyReply;
-			string? nodeResp;
-			INodejsRequest? req = null;
-			try
-			{
-				req = await SetupRequest(
-							context,
-							overrideBodyOnlyReply ?? options.BodyOnlyReply,
-							overrides).ConfigureAwait(false);
-				nodeResp = await nodeJSService.InvokeFromFileAsync<string>(
-						modulePath: options.ScriptPath,
-						args: new object[]
-						{
-							req
-						},
-						cancellationToken: cancel).ConfigureAwait(false);
-
-				if (string.IsNullOrEmpty(nodeResp))
-					return null;
-			}
-			catch (Exception ex)
-			{
-				string r = req != null ? JsonSerializer.Serialize(req) : string.Empty;
-				throw new InvalidOperationException($"Nodejs invoke error {ex.Message} {r}", ex);
-			}
-			try
-			{
-				using Stream nodeRespStream = new MemoryStream(Encoding.UTF8.GetBytes(nodeResp));
-				return await JsonSerializer.DeserializeAsync<NodejsResponse>(
-					nodeRespStream,
-					new JsonSerializerOptions
-					{
-						PropertyNameCaseInsensitive = true,
-						IgnoreReadOnlyProperties = true,
-					},
-					cancel).ConfigureAwait(false);
-			}
-			catch (Exception ex)
-			{
-				throw new InvalidOperationException($"NodejsResponse is invalid - ${ex.Message} - payload: ${nodeResp}", ex);
-			}
-		}
-
 		private static async ValueTask<INodejsRequest> SetupRequest(HttpContext context, bool bodyOnlyReply, RequestOverrides? overrides = null)
 		{
 			HttpRequest request = context.Request;
 			IDictionary<string, string> headers = context.Request.Headers
 				.ToDictionary(k => k.Key.StartsWith(':') ? k.Key[1..] : k.Key, v => v.Value.ToString());
+			if (bodyOnlyReply)
+			{
+				headers.Add("x-component", "true");
+			}
 			NodejsDefaultRequest req = new(
 				request.Method,
 				headers,

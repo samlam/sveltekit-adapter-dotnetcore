@@ -49,6 +49,9 @@ namespace Jering
 			if (context == null || context.Request == null || context.Request.Path == null)
 				return;
 
+			//TODO: do not run if razor page is already rendered into the
+			//response stream, manifest.js provides routes used by sveltekit
+
 			if (Debugger.IsAttached)
 				_Logger.LogInformation($"{nameof(NodejsMiddleware)} is invoked for {context.Request.Path}");
 

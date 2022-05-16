@@ -33,9 +33,10 @@ app.MapRazorPages();
 
 if (hostEnvironment != null)
 {
-    //TODO: home page should not be landed here
-    app.UseNodejsService(hostEnvironment, "./build/static");
+    app.UseNodejsService(hostEnvironment, "./build/client");
     app.UseMiddleware<NodejsMiddleware>();
 }
+
+
 
 app.Run();

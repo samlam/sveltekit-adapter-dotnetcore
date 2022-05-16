@@ -32,16 +32,10 @@ The default output directory is set to `build`
 pnpm install
 ```
 
-* build the adapter
+* build the adapter and sample svelte app (inside dotnet/razor)
 
 ```sh
-npm run build
-```
-
-* build the sample app
-
-```sh
-pnpm run build --filter='sveltekit-dotnet'
+pnpm build -r
 ```
 
 * to build and debug dotnet application with VS code, by hitting F5 with the

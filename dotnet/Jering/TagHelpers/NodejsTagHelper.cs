@@ -53,7 +53,7 @@ namespace Jering
 			RequestOverrides? overrides = RoutePath == null ? null : new(RoutePath);
 
 			NodejsResponse? nodejsOutput = await _NodeJSService
-				.InvokeNodejsService(_NodejsOptions, ViewContext.HttpContext, true, false, overrides)
+				.InvokeNodejsService(_NodejsOptions, ViewContext.HttpContext, false, true, overrides)
 				.ConfigureAwait(false);
 
 			if (nodejsOutput != null)

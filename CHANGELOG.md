@@ -21,6 +21,8 @@
 
 - apply temporary fix to support newer version of sveltekit
 
-### Patch Changes
+## 0.1.4
 
-- various
+- fixed path to static assets
+
+- added a sample component - jokeCard

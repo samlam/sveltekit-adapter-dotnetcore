@@ -12,6 +12,13 @@ export type JeringNodeRequest = {
     bodyOnlyReply: boolean //this can improve the performance in some situations
 }
 
+export type JeringNodeResponse = {
+    status:number, 
+    headers: Headers , 
+    body:string
+}
+
+
 /**
  * defined in adapter-node
  * <https://github.com/sveltejs/kit/blob/37520a3d2873ba941288aa2e3bfb3877ad7688e2/packages/adapter-node/index.d.ts#L7-L11>

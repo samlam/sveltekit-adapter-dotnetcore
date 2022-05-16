@@ -21,7 +21,6 @@
 	"scripts": {
 		"dev": "rollup -c -w",
 		"build": "rollup -c",
-		"build:dotnet-razor": "pnpm build --filter='sveltekit-dotnet'",
 		"test": "c8 uvu tests",
 		"lint": "eslint . --ext .ts --max-warnings=0",
 		"prepublishOnly": "npm run build",
