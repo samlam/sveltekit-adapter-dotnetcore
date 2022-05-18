@@ -74,19 +74,15 @@ namespace Jering
 				return;
 			}
 
-			if (result == null)
-			{
-				await _Next(context).ConfigureAwait(false);
-				return;
-			}
-
 			HttpResponse httpResp = context.Response;
 			httpResp.StatusCode = result.Status;
 
 			if (result.Headers != null)
-			foreach (KeyValuePair<string, string> keyValuePair in result.Headers)
 			{
-				httpResp.Headers.Append(keyValuePair.Key, new Microsoft.Extensions.Primitives.StringValues(keyValuePair.Value));
+				foreach (KeyValuePair<string, string> keyValuePair in result.Headers)
+				{
+					httpResp.Headers.Append(keyValuePair.Key, new Microsoft.Extensions.Primitives.StringValues(keyValuePair.Value));
+				}
 			}
 
 			if (result.BodyStream == null || result.BodyStream.Length == 0)

@@ -1,13 +1,12 @@
 <script context="module" lang="ts">
-	import { browser, dev } from '$app/env';
-	import type {JokeApiResponse} from '../lib/jokeService'
-	import JokeCard from '../lib/components/jokeCard.svelte'
-
-	const pageName = 'About'
+	import type {JokeApiResponse} from '../../lib/jokeService'
+	import JokeCard from '../../lib/components/jokeCard.svelte'
 </script>
 
 <script lang="ts">
 	export let jokeResponse: JokeApiResponse
+    export let id: string
+    const pageName = `Joke ${id}`
 </script>
 
 <svelte:head>
@@ -15,9 +14,8 @@
 </svelte:head>
 
 <section> 
-	<h1>Sveltekit + dotnet - {pageName} page</h1>
 	<br/>
-	<JokeCard {jokeResponse}></JokeCard>
+	<JokeCard {jokeResponse} headOnly={false}></JokeCard>
 	<br/>
 	<a href="/" rel="external">back to home</a>
 </section>

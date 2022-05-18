@@ -23,10 +23,14 @@ export type JokeFlags = {
 }
 
 
-export const getJoke: ()=> MaybePromise<{body?: JSONValue | Uint8Array | unknown;}> = 
-    async () => {
+export const getJoke: (id?:string)=> MaybePromise<{body?: JSONValue | Uint8Array | unknown;}> = 
+    async (id) => {
     try {
-        const jokeReponse = await fetch(`https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,sexist`)
+        const apiUrl = (id) ? 
+            `https://v2.jokeapi.dev/joke/Any?idRange=${id}` :
+            `https://v2.jokeapi.dev/joke/Any?blacklistFlags=nsfw,racist,sexist`
+
+        const jokeReponse = await fetch(apiUrl)
 
         return {
             body: {
