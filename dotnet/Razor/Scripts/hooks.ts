@@ -28,10 +28,13 @@ export const handle: Handle = async ({ event, resolve })=> {
 		})
 		return finalResponse
 	}
-	
-	const sanitizedResponse = (await response.text()).replace('%section%','')
 
-	return new Response(sanitizedResponse, {			
+	const renderedText = await response.text()
+	const sanitizedResponse =  (event.request.url.endsWith('-head'))? 
+		renderedText.substring(0, renderedText.indexOf('%section%')) :
+		renderedText.replace('%section%','')
+
+	return new Response(sanitizedResponse, {
 		headers: response.headers,
 		status: response.status,
 		statusText: response.statusText

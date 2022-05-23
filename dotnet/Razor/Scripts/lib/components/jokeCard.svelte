@@ -1,9 +1,12 @@
 <script lang="ts">
-import { JokeApiResponse } from "../jokeService";
+import type { JokeApiResponse } from "../jokeService";
 
 export let jokeResponse: JokeApiResponse
+//this removes the content and renders link tags only
+export let headOnly: boolean = false
 </script>
 
+{#if !headOnly}
 <section class="joke-card"> 
 	{#if jokeResponse.type == 'twopart'}
 	<h1>{jokeResponse.setup}</h1>
@@ -13,13 +16,25 @@ export let jokeResponse: JokeApiResponse
 	<div>{jokeResponse.delivery}</div>
 	{:else}
 	<h1>{jokeResponse.joke}</h1>
-	<p></p>
+
+	<br />
 	{/if}
+	<span class="joke-id">
+		<a 
+			href="/joke/{jokeResponse.id}" 
+			alt="permalink" 
+			title="permalink to this joke {jokeResponse.id}"
+			rel="external">
+				{jokeResponse.id}
+		</a>
+	</span>
 </section>
+{/if}
 
 <style lang="scss">
 	section.joke-card {
 		font-family: sans-serif;
+		font-size: 1em;
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
@@ -37,8 +52,21 @@ export let jokeResponse: JokeApiResponse
 		border-radius: 1em;
 
 		h1 {
-			margin: 0 1em 1em;
+			margin: auto;
 			line-height: 1.6em;
+			font-size: 1em;
+			font-weight: bold;
+		}
+
+		.joke-id {
+			margin-top: auto;
+			margin-left: 25em;
+			font-size: 0.8em;
+			color: #777;
+			a {
+				color: #777;
+				text-decoration: none;
+			}
 		}
 	}
 </style>
