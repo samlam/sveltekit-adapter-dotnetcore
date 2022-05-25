@@ -35,7 +35,7 @@ pnpm install
 * build the adapter and sample svelte app (inside dotnet/razor)
 
 ```sh
-pnpm build -r
+pnpm -r build
 ```
 
 * to build and debug dotnet application with VS code, by hitting F5 with the

@@ -1,6 +1,6 @@
 {
 	"name": "sveltekit-adapter-dotnetcore",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"description": "sveltekit adapter for dotnetcore",
 	"homepage": "https://github.com/samlam/sveltekit-adapter-dotnetcore#readme",
 	"repository": {

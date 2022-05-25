@@ -12,7 +12,9 @@ const adapterfiles: string = fileURLToPath(new URL('./', import.meta.url).href)
 
 export default function ({
     out = 'build',
-    //precompress = false, //compression will be done in dotnetcore for performance,
+    //compression will be done in dotnetcore for performance,
+    //precompress = false, 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     envPrefix = '',
     esbuildOptsFunc = null
 }: AdapterOptionsExtra): Adapter {

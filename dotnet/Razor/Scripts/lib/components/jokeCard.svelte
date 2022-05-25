@@ -53,6 +53,7 @@ export let headOnly: boolean = false
 
 		h1 {
 			margin: auto;
+			padding: 0 .1em;
 			line-height: 1.6em;
 			font-size: 1em;
 			font-weight: bold;
