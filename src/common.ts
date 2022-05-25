@@ -34,6 +34,7 @@ export type AdapterOptionsExtra = AdapterOptions & {
 }
 
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const setupSvelteRequestOptions = (req:unknown ) => {
     return {
             getClientAddress() {

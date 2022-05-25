@@ -6,7 +6,7 @@ import { cleanup } from './cleanup'
 import { setupSvelteRequestOptions } from './common'
 import { RequestOptions } from '@sveltejs/kit/types/private';
 import { Readable } from 'node:stream';
-import type {JeringNodeRequest, JeringNodeResponse} from './common'
+import type { JeringNodeRequest, JeringNodeResponse } from './common'
 
 let _logger: WriteStream = null
 
@@ -18,24 +18,29 @@ installFetch()
 if (_isDebug) {
     const logPath: string = __dirname + '/debug.log'
     console.info(`log path : ${logPath}`)
-    _logger = createWriteStream(logPath, {flags : 'w'})
+    _logger = createWriteStream(logPath, { flags: 'w' })
 }
 
 const setupRequest = (origRequest: JeringNodeRequest): Request => {
-    const {path:url, method, headers, body} = origRequest
+    const { path: url, method, headers, body, queryString, host } = origRequest
     const reqInit: RequestInit = {
         method,
         headers: new Headers(headers),
     }
 
-	if (body) {
-		reqInit.body = Buffer.from(body, 'utf-8')
-	}
+    if (body) {
+        reqInit.body = Buffer.from(body, 'utf-8')
+    }
 
-    return new Request(`https://${origRequest.host}${url}` , reqInit)
+    let requestUrl = `https://${host}${url}`
+    if (queryString && requestUrl.indexOf('?') === -1) {
+        requestUrl += `?${queryString}`
+    }
+
+    return new Request(requestUrl, reqInit)
 }
 
-const handleError = (msg:string ) => {
+const handleError = (msg: string) => {
     if (_isDebug)
         _logger.write(msg)
     throw new Error(msg)
@@ -47,9 +52,9 @@ const handleError = (msg:string ) => {
  * @param origRequest Jering request
  */
 const HttpHandler = (
-    callback: (err: Error, output: Readable| ReadableStream | JeringNodeResponse| string) => void, 
+    callback: (err: Error, output: Readable | ReadableStream | JeringNodeResponse | string) => void,
     origRequest: JeringNodeRequest
-): void=> {
+): void => {
     let req: Request
 
     try {
@@ -61,24 +66,24 @@ const HttpHandler = (
             req = setupRequest(origRequest)
             //getRequest(get_origin(req.headers), req as IncomingMessage).then((r) => req = r)
         }
-        catch(reqErr) {
-            handleError( `ERROR: setupRequest - ${JSON.stringify(reqErr)}`)
+        catch (reqErr) {
+            handleError(`ERROR: setupRequest - ${JSON.stringify(reqErr)}`)
         }
 
-        if(!_server)
+        if (!_server)
             handleError(`ERROR: svelte server is null`)
 
         const svelteReqOption: RequestOptions = setupSvelteRequestOptions(req)
         _server.respond(req, svelteReqOption)
-            .then((resp: Response | {body:string}) => {
+            .then((resp: Response | { body: string }) => {
 
                 if (_isDebug) {
                     _logger.write(`svelte response - ${JSON.stringify(resp)} \r\n`)
                 }
                 if (origRequest.bodyOnlyReply)
-                    callback(null, (resp as {body:string}).body )
-                    //TODO: need to switch over to stream for performance
-                    //callback(null, (resp as Response).body )
+                    callback(null, (resp as { body: string }).body)
+                //TODO: need to switch over to stream for performance
+                //callback(null, (resp as Response).body )
                 else {
                     const r = (resp as Response)
                     r.text().then((data) => {
@@ -90,7 +95,7 @@ const HttpHandler = (
                     })
                 }
             })
-            .catch((err:Error) => {
+            .catch((err: Error) => {
                 callback(err, null)
             });
     } catch (err) {

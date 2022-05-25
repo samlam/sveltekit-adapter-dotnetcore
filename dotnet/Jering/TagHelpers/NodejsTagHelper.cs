@@ -44,7 +44,7 @@ namespace Jering
 		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
 		{
 			Debug.Assert(context != null && output != null);
-
+			output.TagName = null;
 			output.TagMode = TagMode.StartTagAndEndTag;
 
 			//NOTE: this clears the slot
