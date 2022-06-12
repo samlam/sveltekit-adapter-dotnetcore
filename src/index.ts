@@ -22,7 +22,7 @@ if (_isDebug) {
 }
 
 const setupRequest = (origRequest: JeringNodeRequest): Request => {
-    const { path: url, method, headers, body, queryString, host } = origRequest
+    const { path: url, method, headers, body, queryString, host, scheme } = origRequest
     const reqInit: RequestInit = {
         method,
         headers: new Headers(headers),
@@ -32,7 +32,7 @@ const setupRequest = (origRequest: JeringNodeRequest): Request => {
         reqInit.body = Buffer.from(body, 'utf-8')
     }
 
-    let requestUrl = `https://${host}${url}`
+    let requestUrl = `${scheme}://${host}${url}`
     if (queryString && requestUrl.indexOf('?') === -1) {
         requestUrl += `?${queryString}`
     }

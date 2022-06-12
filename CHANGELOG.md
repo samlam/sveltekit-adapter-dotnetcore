@@ -26,3 +26,11 @@
 - fixed path to static assets
 
 - added a sample component - jokeCard
+
+## 0.1.5
+
+- improved the demo
+
+## 0.1.6
+
+- add scheme support

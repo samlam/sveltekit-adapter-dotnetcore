@@ -9,6 +9,7 @@ export type JeringNodeRequest = {
     query: URLSearchParams,
     queryString: string,
     rawBody: Uint8Array | null,
+    scheme: string,
     bodyOnlyReply: boolean //this can improve the performance in some situations
 }
 

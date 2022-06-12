@@ -33,17 +33,16 @@ namespace Jering
                 .AddNodeJS()
                 .Configure<OutOfProcessNodeJSServiceOptions>(options =>
                 {
+#if DEBUG
+                    options.Concurrency = Concurrency.None;
+                    options.EnableFileWatching = true;
+                    options.WatchPath = "./build/";
+                    options.TimeoutMS = -1; // -1 to wait forever (used for attaching debugger, which needs to be set in code)
+#else
                     options.Concurrency = Concurrency.MultiProcess;
                     options.ConcurrencyDegree = 2;
                     options.TimeoutMS = 1000;
-
-                    if (Debugger.IsAttached)
-                    {
-                        options.Concurrency = Concurrency.None;
-                        options.EnableFileWatching = true;
-                        options.WatchPath = "./build/";
-                        options.TimeoutMS = -1; // -1 to wait forever (used for attaching debugger, which needs to be set in code)
-                    }
+#endif
                 })
                 .Configure<HttpNodeJSServiceOptions>(options => options.Version = HttpVersion.Version20)
                 .Configure<NodeJSProcessOptions>(options =>
@@ -56,7 +55,7 @@ namespace Jering
                     options.EnvironmentVariables = new Dictionary<string, string>
                     {
                         { "VITE_ForgePort", "5004"}, // this value needs to match the port # in launchSettings.json
-						{ "NODE_ENV", "development"}
+                        { "NODE_ENV", "development"}
                     };
                 });
 
@@ -143,6 +142,7 @@ namespace Jering
                 hostname: request.Host.ToString(),
                 routePath: overrides == null ? request.Path : overrides.Path,
                 requestBody: bodyResult.Buffer,
+                scheme: request.Scheme,
                 bodyOnlyReply);
         }
 
@@ -164,6 +164,7 @@ namespace Jering
             string hostname,
             string routePath,
             System.Buffers.ReadOnlySequence<byte> requestBody,
+            string scheme,
             bool bodyOnlyReply)
         {
             if (headers == null)
@@ -184,7 +185,9 @@ namespace Jering
                 headers,
                 routePath,
                 queryString!,
-                hostname);
+                hostname,
+                scheme
+                );
 
             req.Body = Encoding.UTF8.GetString(requestBody);
 
