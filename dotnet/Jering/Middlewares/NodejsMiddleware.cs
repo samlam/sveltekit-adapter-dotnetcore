@@ -1,20 +1,17 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Threading.Tasks;
 
 using Jering.Javascript.NodeJS;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace Jering
 {
-	/// <summary>
-	/// Nodejs middleware with Jering lib.
-	/// </summary>
-	public class NodejsMiddleware
+    /// <summary>
+    /// Nodejs middleware with Jering lib.
+    /// </summary>
+    public class NodejsMiddleware
 	{
 		private readonly bool _ShouldGzipCompress = true;
 		private readonly RequestDelegate _Next;
@@ -29,14 +26,17 @@ namespace Jering
 		/// <param name="logger">Logger for middleware.</param>
 		/// <param name="nodeJSService"><see cref="INodeJSService"/> and should not be disposed.</param>
 		/// <param name="options"><see cref="NodejsOptions"/>.</param>
-		public NodejsMiddleware(RequestDelegate next, ILogger<NodejsMiddleware> logger, INodeJSService nodeJSService, IOptionsMonitor<NodejsOptions> options)
+		public NodejsMiddleware(
+			RequestDelegate next, 
+			ILogger<NodejsMiddleware> logger, 
+			INodeJSService nodeJSService, 
+			IOptionsMonitor<NodejsOptions> options)
 		{
 			_Next = next ?? throw new ArgumentNullException(nameof(next));
 			_Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 			_NodeJSService = nodeJSService
 				?? throw new ArgumentNullException(nameof(nodeJSService));
 			_NodejsOptions = options ?? throw new ArgumentNullException(nameof(options));
-			_ShouldGzipCompress = _NodejsOptions.CurrentValue.GzipCompressResponse;
 		}
 
 		/// <summary>
@@ -49,9 +49,6 @@ namespace Jering
 			if (context == null || context.Request == null || context.Request.Path == null)
 				return;
 
-			//TODO: do not run if razor page is already rendered into the
-			//response stream, manifest.js provides routes used by sveltekit
-
 			if (Debugger.IsAttached)
 				_Logger.LogInformation($"{nameof(NodejsMiddleware)} is invoked for {context.Request.Path}");
 
@@ -59,7 +56,8 @@ namespace Jering
 			try 
 			{
 				result = await _NodeJSService
-					.InvokeNodejsService(_NodejsOptions.CurrentValue, context, _ShouldGzipCompress, false, null, context.RequestAborted).ConfigureAwait(false);
+					.InvokeNodejsRequestUsingHttpContext(_NodejsOptions.CurrentValue, context, _ShouldGzipCompress, false, null, context.RequestAborted)
+					.ConfigureAwait(false);
 
 				if (result == null || result.Status == 404)
 				{
@@ -77,27 +75,27 @@ namespace Jering
 			HttpResponse httpResp = context.Response;
 			httpResp.StatusCode = result.Status;
 
-			if (result.Headers != null)
+			if (result.Headers != null && result.Headers.Count > 0)
 			{
 				foreach (KeyValuePair<string, string> keyValuePair in result.Headers)
 				{
-					httpResp.Headers.Append(keyValuePair.Key, new Microsoft.Extensions.Primitives.StringValues(keyValuePair.Value));
+					httpResp.Headers.Append(keyValuePair.Key, new StringValues(keyValuePair.Value));
 				}
 			}
 
-			if (result.BodyStream == null || result.BodyStream.Length == 0)
+			if (string.IsNullOrWhiteSpace(result.Body))
 			{
 				await _Next(context).ConfigureAwait(false);
 				return;
 			}
 
-			if (_ShouldGzipCompress)
+			if (_NodejsOptions.CurrentValue.GzipCompressResponse && result.BodyStream != null)
 			{
 				using Stream body = await result.BodyStream.CompressContentAsync().ConfigureAwait(false);
 
 				IHeaderDictionary headers = context.Response.Headers;
-				headers.Add("Content-Encoding", new Microsoft.Extensions.Primitives.StringValues("gzip"));
-				headers.Add("Content-Length", new Microsoft.Extensions.Primitives.StringValues(body.Length.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+				headers.Add("Content-Encoding", new StringValues("gzip"));
+				headers.Add("Content-Length", new StringValues(body.Length.ToString(System.Globalization.CultureInfo.InvariantCulture)));
 				await body.CopyToAsync(context.Response.Body, context.RequestAborted).ConfigureAwait(false);
 				return;
 			}

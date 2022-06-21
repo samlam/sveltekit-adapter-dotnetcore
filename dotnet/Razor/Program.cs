@@ -1,14 +1,15 @@
 using Jering;
 
-var builder = WebApplication.CreateBuilder(args);
-
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 // Add Jering Node services
-builder.Services.ConfigureNodejsService();
+builder.Services.ConfigureNodejsService(builder.Configuration.GetSection("NodejsOptions").Get<NodejsOptions>());
 
-var app = builder.Build();
+builder.Services.AddResponseCompression(options => options.EnableForHttps = true);
+
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -22,21 +23,19 @@ IHostEnvironment? hostEnvironment = app.Services.GetService<IHostEnvironment>();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-// app.UseResponseCompression();
-
-
+app.UseResponseCompression();
 app.UseRouting();
-
 app.UseAuthorization();
-
 app.MapRazorPages();
 
 if (hostEnvironment != null)
 {
     app.UseNodejsService(hostEnvironment, "./build/client");
-    app.UseMiddleware<NodejsMiddleware>();
+    app.UseWhen(
+        httpContext => 
+            httpContext.Request.Path.StartsWithSegments("/joke") ||
+            httpContext.Request.Path.StartsWithSegments("/about"), 
+        appBuilder => appBuilder.UseMiddleware<NodejsMiddleware>());
 }
-
-
 
 app.Run();

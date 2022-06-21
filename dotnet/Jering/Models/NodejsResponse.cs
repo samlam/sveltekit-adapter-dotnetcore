@@ -1,16 +1,30 @@
-﻿using System.Collections.Generic;
-using System.IO;
-
-namespace Jering
+﻿namespace Jering
 {
-	internal class NodejsResponse
+    /// <summary>
+    /// Standard node.js response.
+    /// </summary>
+    internal class NodejsResponse
 	{
+		/// <summary>
+		/// Gets or sets Http status code.
+		/// </summary>
 		public int Status { get; set; }
 
-		public Dictionary<string, string> Headers { get; set; } = new Dictionary<string, string>();
+		/// <summary>
+		/// Gets or sets Http headers.
+		/// </summary>
+		public Dictionary<string, string>? Headers { get; set; }
 
-		public string Body { get; set; } = string.Empty;
+		/// <summary>
+		/// Gets or sets Body.
+		/// </summary>
+		public string? Body { get; set; }
 
-		public virtual Stream BodyStream => new MemoryStream(System.Text.Encoding.UTF8.GetBytes(Body ?? string.Empty));
+		/// <summary>
+		/// Gets body byte array.
+		/// </summary>
+		public virtual Stream? BodyStream => string.IsNullOrWhiteSpace(Body)
+			? null
+			: new MemoryStream(System.Text.Encoding.UTF8.GetBytes(Body));
 	}
 }
