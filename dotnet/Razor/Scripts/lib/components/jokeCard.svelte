@@ -41,7 +41,7 @@ export let headOnly: boolean = false
 		align-items: center;
 		margin: 0 auto;
 		flex: 1;
-		background: url("http://placeimg.com/480/320/people/grayscale") no-repeat center center;
+		background: url("https://placeimg.com/480/320/people/grayscale") no-repeat center center;
 		background-blend-mode: soft-light;
 		background-color:antiquewhite;
 		max-width: 30em;
