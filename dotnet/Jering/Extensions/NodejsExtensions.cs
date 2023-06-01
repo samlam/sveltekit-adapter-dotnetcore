@@ -8,7 +8,6 @@ using Jering.Javascript.NodeJS;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -25,36 +24,37 @@ namespace Jering
         /// AddJering method to registed in Startup.
         /// </summary>
         /// <param name="services">Services <see cref="IServiceCollection"/> collection.</param>
-        /// <param name="config">Application <see cref="IConfiguration"/>.</param>
+        /// <param name="config">Application <see cref="NodejsOptions"/>.</param>
         /// <returns>Extension method return parameter.</returns>
-        public static IServiceCollection ConfigureNodejsService(this IServiceCollection services)
+        public static IServiceCollection ConfigureNodejsService(
+            this IServiceCollection services, 
+            NodejsOptions nodejsOptions)
         {
+            if (nodejsOptions == null)
+            {
+                throw new ArgumentNullException(nameof(nodejsOptions));
+            }
+
             services
                 .AddNodeJS()
                 .Configure<OutOfProcessNodeJSServiceOptions>(options =>
                 {
-#if DEBUG
-                    options.Concurrency = Concurrency.None;
-                    options.EnableFileWatching = true;
-                    options.WatchPath = "./build/";
-                    options.TimeoutMS = -1; // -1 to wait forever (used for attaching debugger, which needs to be set in code)
-#else
-                    options.Concurrency = Concurrency.MultiProcess;
-                    options.ConcurrencyDegree = 2;
-                    options.TimeoutMS = 1000;
-#endif
+                    options.Concurrency = nodejsOptions.Concurrency;
+                    options.ConcurrencyDegree = nodejsOptions.ConcurrencyDegree;
+                    options.TimeoutMS = nodejsOptions.NodejsConnectionTimeoutMS;
+
+                    ApplyDebugJeringOptions(options);
                 })
-                .Configure<HttpNodeJSServiceOptions>(options => options.Version = HttpVersion.Version20)
+                .Configure<HttpNodeJSServiceOptions>(options => options.Version = HttpVersion.Version11)
                 .Configure<NodeJSProcessOptions>(options =>
                 {
+                    options.NodeAndV8Options = nodejsOptions.NodeAndV8Options;
 #if DEBUG
-                    options.NodeAndV8Options = "--inspect --es-module-specifier-resolution=node --experimental-vm-modules";
-#else
-					options.NodeAndV8Options = "--es-module-specifier-resolution=node --experimental-vm-modules ";
+                    options.NodeAndV8Options += " --inspect ";
 #endif
                     options.EnvironmentVariables = new Dictionary<string, string>
                     {
-                        { "VITE_ForgePort", "5004"}, // this value needs to match the port # in launchSettings.json
+                        { "VITE_DotNetPort", $"{nodejsOptions.DotNetPort}"}, // this value needs to match the port # in launchSettings.json
                         { "NODE_ENV", "development"}
                     };
                 });
@@ -80,36 +80,6 @@ namespace Jering
                     HttpsCompression = HttpsCompressionMode.Compress,
                     FileProvider = new PhysicalFileProvider(Path.Join(hostEnvironment?.ContentRootPath, staticAssetsPath))
                 });
-        }
-
-        /// <summary>
-        /// Invoke nodejs service with the given request.
-        /// </summary>
-        /// <param name="nodeJSService"><see cref="INodeJSService"/>.</param>
-        /// <param name="options"><see cref="NodejsOptions"/>.</param>
-        /// <param name="nodejsRequest"><see cref="INodejsRequest"/>.</param>
-        /// <param name="overrides"><see cref="RequestOverrides"/>.</param>
-        /// <param name="cancellationToken"><see cref="CancellationToken"/>.</param>
-        /// <returns>html content.</returns>
-        public static async Task<string> InvokeNodejsServiceAsync(
-            this INodeJSService nodeJSService,
-            NodejsOptions options,
-            ValueTask<INodejsRequest> nodejsRequest,
-            RequestOverrides? overrides = null,
-            CancellationToken cancellationToken = default)
-        {
-            Debug.Assert(nodeJSService != null);
-            Debug.Assert(options != null);
-
-            NodejsResponse? resp = await nodeJSService.InvokeNodejsService(
-                options,
-                nodejsRequest,
-                false,
-                false,
-                overrides,
-                cancellationToken).ConfigureAwait(false);
-
-            return resp == null ? string.Empty : resp.Body;
         }
 
         /// <summary>
@@ -196,87 +166,6 @@ namespace Jering
             return req;
         }
 
-        internal static async Task<NodejsResponse?> InvokeNodejsService(
-            this INodeJSService nodeJSService,
-            NodejsOptions options,
-            HttpContext context,
-            bool? overrideBodyOnlyReply = null,
-            CancellationToken cancellationToken = default)
-        {
-            return await InvokeNodejsService(nodeJSService, options, context, false, overrideBodyOnlyReply, null, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        internal static async Task<NodejsResponse?> InvokeNodejsService(
-            this INodeJSService nodeJSService,
-            NodejsOptions options,
-            HttpContext context,
-            bool shouldGzipCompress,
-            bool? overrideBodyOnlyReply = null,
-            CancellationToken cancellationToken = default)
-        {
-            return await InvokeNodejsService(nodeJSService, options, context, shouldGzipCompress, overrideBodyOnlyReply, null, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        internal static async Task<NodejsResponse?> InvokeNodejsService(
-            this INodeJSService nodeJSService,
-            NodejsOptions options,
-            HttpContext context,
-            bool shouldGzipCompress,
-            bool? overrideBodyOnlyReply = null,
-            RequestOverrides? overrides = null,
-            CancellationToken cancellationToken = default)
-        {
-            ValueTask<INodejsRequest> nodeReq = SetupRequest(
-                    context,
-                    overrideBodyOnlyReply ?? options.BodyOnlyReply,
-                    overrides);
-
-            return await nodeJSService.InvokeNodejsService(
-                    options,
-                    nodeReq,
-                    shouldGzipCompress,
-                    overrideBodyOnlyReply,
-                    overrides,
-                    cancellationToken).ConfigureAwait(false);
-        }
-
-        internal static async Task<NodejsResponse?> InvokeNodejsService(
-            this INodeJSService nodeJSService,
-            NodejsOptions options,
-            ValueTask<INodejsRequest> nodejsRequest,
-            bool shouldGzipCompress,
-            bool? overrideBodyOnlyReply = null,
-            RequestOverrides? overrides = null,
-            CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(nameof(nodeJSService));
-            ArgumentNullException.ThrowIfNull(nameof(options));
-
-            bool bodyOnlyReply = overrideBodyOnlyReply ?? options.BodyOnlyReply;
-
-            object[] arguments = new object[]
-            {
-                await nodejsRequest.ConfigureAwait(false),
-            };
-
-            if (bodyOnlyReply == true)
-            {
-                Stream? streamResp = await nodeJSService.InvokeFromFileAsync<Stream>(
-                   modulePath: options.ScriptPath,
-                   args: arguments,
-                   cancellationToken: cancellationToken).ConfigureAwait(false);
-
-                return streamResp == null ? null : new NodejsBodyOnlyResponse(streamResp);
-            }
-
-            return await nodeJSService.InvokeFromFileAsync<NodejsResponse>(
-                    modulePath: options.ScriptPath,
-                    args: arguments,
-                    cancellationToken: cancellationToken).ConfigureAwait(false);
-        }
-
         internal static async Task<Stream> CompressContentAsync(this Stream input)
         {
 #pragma warning disable CA2000 // Dispose objects before losing scope
@@ -288,5 +177,15 @@ namespace Jering
             compressor.BaseStream.Position = 0;
             return compressor.BaseStream;
         }
+
+        [Conditional("DEBUG")]
+        private static void ApplyDebugJeringOptions(OutOfProcessNodeJSServiceOptions options)
+        {
+            options.Concurrency = Concurrency.None;
+            options.EnableFileWatching = true;
+            options.WatchPath = "./build/";
+            options.TimeoutMS = -1; // -1 to wait forever (used for attaching node.js debugger)
+        }
+
     }
 }

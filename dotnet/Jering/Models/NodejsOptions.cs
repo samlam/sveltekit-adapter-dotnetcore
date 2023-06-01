@@ -35,7 +35,7 @@ namespace Jering
 		/// <summary>
 		/// Gets or sets maximum time (millisecond) to connect with Nodejs.
 		/// </summary>
-		public int NodejsConnectionTimeout { get; set; } = 3000;
+		public int NodejsConnectionTimeoutMS { get; set; } = 1000;
 
 		/// <summary>
 		/// Gets or sets Node options.
@@ -58,9 +58,14 @@ namespace Jering
 		public bool GzipCompressResponse { get; set; }
 
 		/// <summary>
-		/// Gets or sets the non-secured port used by forge.
+		/// Gets or sets the non-secured port used by dotnet.
 		/// </summary>
-		public int ForgePort { get; set; }
+		public int DotNetPort { get; set; }
+
+		/// <summary>
+		/// Gets or sets the Http scheme used by dotnet.
+		/// </summary>
+		public string DotNetScheme { get; set; } = "http";
 
 		/// <summary>
 		/// Gets or sets a value indicating whether nodejs to reply only with body, which

@@ -1,6 +1,6 @@
 {
 	"name": "sveltekit-adapter-dotnetcore",
-	"version": "0.1.6",
+	"version": "0.1.7",
 	"description": "sveltekit adapter for dotnetcore",
 	"homepage": "https://github.com/samlam/sveltekit-adapter-dotnetcore#readme",
 	"repository": {
@@ -58,5 +58,15 @@
 	"license": "MIT",
 	"dependencies": {
 		"esbuild-plugin-babel": "^0.2.3"
+	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org"
+	},
+	"pnpm": {
+		"overrides": {
+			"node-fetch@>=3.0.0 <3.2.10": ">=3.2.10",
+			"svelte@<3.49.0": ">=3.49.0",
+			"vite@<2.9.13": ">=2.9.13"
+		}
 	}
 }

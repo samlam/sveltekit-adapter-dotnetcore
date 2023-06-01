@@ -41,9 +41,9 @@ export let headOnly: boolean = false
 		align-items: center;
 		margin: 0 auto;
 		flex: 1;
-		background: url("http://placeimg.com/480/320/people/grayscale") no-repeat center center;
-		background-blend-mode: soft-light;
-		background-color:antiquewhite;
+		background: url("https://picsum.photos/480/320") no-repeat center center;
+		background-blend-mode: overlay;
+		background-color: lightsteelblue;
 		max-width: 30em;
 		min-width: 30em;
 		min-height: 20em;

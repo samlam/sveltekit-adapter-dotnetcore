@@ -43,7 +43,9 @@ namespace Jering
 
 		public override async Task ProcessAsync(TagHelperContext context, TagHelperOutput output)
 		{
-			Debug.Assert(context != null && output != null);
+			Debug.Assert(context != null && RoutePath != null);
+			Debug.Assert(output != null);
+
 			output.TagName = null;
 			output.TagMode = TagMode.StartTagAndEndTag;
 
@@ -51,13 +53,28 @@ namespace Jering
 			if (ResetContent)
 				output.Content.Clear();
 
-			RequestOverrides? overrides = RoutePath == null ? null : new(RoutePath);
+			// TODO: HttpMethod, Body, querystring should be optional and
+			// can be overriden
+			ValueTask<INodejsRequest> nodeReq = ValueTask.FromResult(
+				NodejsExtensions.SetupRequest(
+					httpMethod: "GET",
+					headers: null,
+					queryString: null,
+					hostname: ViewContext.HttpContext.Request.Host.Value,
+					routePath: RoutePath,
+					requestBody: NodejsExtensions.EmptyBodyResult.Buffer,
+					scheme: ViewContext.HttpContext.Request.Scheme,
+					false));
 
 			NodejsResponse? nodejsOutput = await _NodeJSService
-				.InvokeNodejsService(_NodejsOptions, ViewContext.HttpContext, false, true, overrides)
+				.InvokeNodejsRequestUsingValueTask(
+					options: _NodejsOptions,
+					nodejsRequest: nodeReq,
+					shouldGzipCompress: false,
+					overrideBodyOnlyReply: true)
 				.ConfigureAwait(false);
 
-			if (nodejsOutput != null)
+			if (nodejsOutput != null && nodejsOutput.BodyStream != null)
 			{
 				await nodejsOutput.BodyStream.CopyToAsync(_Buffer).ConfigureAwait(false);
 				output.Content.SetHtmlContent(new StreamHtmlContent(_Buffer));

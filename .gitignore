@@ -12,3 +12,4 @@ dotnet/Razor/build
 /build
 obj
 *.log
+*.tgz
